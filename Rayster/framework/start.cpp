@@ -6,6 +6,8 @@
 #include "memory/Model.hpp"
 #include "memory/gpu/UploadBuffer.hpp"
 
+constexpr float PI = 3.14159265358979323846;
+
 using Microsoft::WRL::ComPtr;
 
 struct Vertex {
@@ -13,9 +15,13 @@ struct Vertex {
 	float r, g, b;
 };
 
-float theta = 90.0f;
-float phi = 0.0f;
-float radius = 3.0f;
+constexpr static float degreesToRadians(float degrees) {
+	return degrees * 180 / PI;
+}
+
+float theta = degreesToRadians(45.0f);
+float phi = degreesToRadians(45.0f);
+float radius = 6.0f;
 
 static inline float getX() {
 	return radius * sinf(theta) * cosf(phi);
