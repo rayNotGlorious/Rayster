@@ -131,6 +131,14 @@ void Display::initialize() {
 	instance.depthStencilHandle = instance.depthStencilDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
 	instance.loadDepthStencilBuffer(instance.width, instance.height);
+
+	instance.registerKeyPressCallback(Key::F11, []() {
+		instance.setFullscreen(!instance.fullscreened);
+	});
+
+	instance.registerKeyPressCallback(Key::Escape, []() {
+		instance.closed = true;
+	});
 }
 
 void Display::cleanUp() {
@@ -241,7 +249,46 @@ void Display::freeDepthStencilBuffer() {
 	instance.depthStencilBuffer.Reset();
 }
 
+void Display::registerKeyCallback(KeyDirectory& directory, Key key, void (*callback)(void), std::optional<std::string> name) {
+	directory[key].push_back(std::make_tuple(name, callback));
+}
+
+void Display::registerKeyPressCallback(Key key, void (*callback)(void), std::optional<std::string> name) {
+	registerKeyCallback(instance.keyPressCallbacks, key, callback, name);
+}
+
+void Display::registerKeyReleaseCallback(Key key, void(*callback)(void), std::optional<std::string> name) {
+	registerKeyCallback(instance.keyReleaseCallbacks, key, callback, name);
+}
+
+void Display::deregisterKeyCallback(KeyDirectory& directory, Key key, std::string name) {
+	auto& vec = directory[key];
+
+	for (auto it = vec.begin(); it != vec.end(); ++it) {
+		auto& [curr, _] = *it;
+
+		if (curr && curr == name) {
+			vec.erase(it);
+			break;
+		}
+	}
+}
+
+void Display::deregisterKeyPressCallback(Key key, std::string name) {
+	deregisterKeyCallback(instance.keyPressCallbacks, key, name);
+}
+
+void Display::deregisterKeyReleaseCallback(Key key, std::string name) {
+	deregisterKeyCallback(instance.keyReleaseCallbacks, key, name);
+}
+
 bool Display::poll() {
+	static auto lastFrame = std::chrono::high_resolution_clock::now();
+
+	auto now = std::chrono::high_resolution_clock::now();
+	instance.deltaTime = now - lastFrame;
+	lastFrame = now;
+
 	MSG message;
 	while (PeekMessageW(&message, instance.window, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&message);
@@ -416,6 +463,17 @@ HRESULT Display::allocateUploadBuffer(UINT64 size, const IID& riidResource, void
 	return instance.device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDescription, D3D12_RESOURCE_STATE_COMMON, nullptr, riidResource, ppvResource);
 }
 
+void Display::handleKeyCallback(KeyDirectory& directory, Key key) {
+	auto it = directory.find(key);
+	if (it == directory.end()) {
+		return;
+	}
+
+	for (auto& [_, op] : it->second) {
+		op();
+	}
+}
+
 LRESULT CALLBACK Display::onWindowMessage(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	switch (msg) {
 		case WM_CLOSE:
@@ -429,9 +487,17 @@ LRESULT CALLBACK Display::onWindowMessage(HWND wnd, UINT msg, WPARAM wParam, LPA
 			break;
 
 		case WM_KEYDOWN:
-			if (wParam == VK_F11) {
-				instance.setFullscreen(!instance.fullscreened);
+			if (instance.pressed.contains(static_cast<Key>(wParam))) {
+				break;
 			}
+
+			instance.pressed.insert(static_cast<Key>(wParam));
+			handleKeyCallback(instance.keyPressCallbacks, static_cast<Key>(wParam));
+			break;
+
+		case WM_KEYUP:
+			instance.pressed.erase(static_cast<Key>(wParam));
+			handleKeyCallback(instance.keyReleaseCallbacks, static_cast<Key>(wParam));
 			break;
 	}
 

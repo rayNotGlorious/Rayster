@@ -1,5 +1,13 @@
 #pragma once
+
+#include <unordered_map>
+#include <unordered_set>
+#include <optional>
+#include <string>
+#include <chrono>
+
 #include "common.h"
+#include "display/Key.hpp"
 
 class Display {
 public:
@@ -37,6 +45,15 @@ public:
 	static inline FLOAT getAspectRatio() {
 		return (float)getWidth() / (float)getHeight();
 	}
+
+	static inline float getDeltaTime() {
+		return instance.deltaTime.count();
+	}
+
+	static void registerKeyPressCallback(Key key, void (*callback)(void), std::optional<std::string> name = std::nullopt);
+	static void deregisterKeyPressCallback(Key key, std::string name);
+	static void registerKeyReleaseCallback(Key key, void (*callback)(void), std::optional<std::string> name = std::nullopt);
+	static void deregisterKeyReleaseCallback(Key key, std::string name);
 
 private:
 	static Display instance;
@@ -83,8 +100,22 @@ private:
 	bool resized = false;
 	bool fullscreened = false;
 
-	static LRESULT CALLBACK onWindowMessage(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	// Keys
+	using KeyDirectory = std::unordered_map<Key, std::vector<std::tuple<std::optional<std::string>, void (*)(void)>>>;
 
+	KeyDirectory keyPressCallbacks;
+	KeyDirectory keyReleaseCallbacks;
+	
+	std::unordered_set<Key> pressed;
+	static LRESULT CALLBACK onWindowMessage(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	
+	static void registerKeyCallback(KeyDirectory& directory, Key key, void (*callback)(void), std::optional<std::string> name);
+	static void deregisterKeyCallback(KeyDirectory& directory, Key key, std::string name);
+	static void handleKeyCallback(KeyDirectory& directory, Key key);
+
+	// Game State
+	std::chrono::duration<float, std::milli> deltaTime;
+	
 public:
 	Display(const Display&) = delete;
 	Display& operator=(const Display&) = delete;

@@ -1,9 +1,10 @@
 #include <iostream>
+#include <DirectXMath.h>
+#include <chrono>
 #include "display/Display.hpp"
-#include "shader/Shader.hpp"
+#include "logic/Shader.hpp"
 #include "memory/Model.hpp"
 #include "memory/gpu/UploadBuffer.hpp"
-#include <DirectXMath.h>
 
 using Microsoft::WRL::ComPtr;
 
@@ -11,6 +12,22 @@ struct Vertex {
 	float x, y, z;
 	float r, g, b;
 };
+
+float theta = 90.0f;
+float phi = 0.0f;
+float radius = 3.0f;
+
+static inline float getX() {
+	return radius * sinf(theta) * cosf(phi);
+}
+
+static inline float getY() {
+	return radius * sinf(theta) * sinf(phi);
+}
+
+static inline float getZ() {
+	return radius * cosf(theta);
+}
 
 int start(int argc, char* argv[]) {
 	Display::setFullscreen(true);
@@ -62,8 +79,8 @@ int start(int argc, char* argv[]) {
 
 	UploadBuffer uploadBuffer = { mesh };
 
-	Shader vertex("vertex.cso");
-	Shader pixel("pixel.cso");
+	VertexShader vertex("vertex.hlsl");
+	PixelShader pixel("pixel.hlsl");
 
 	ComPtr<ID3D12Resource2> vertexBuffer;
 	ThrowIfFailed(Display::allocateVertexGpuBuffer(uploadBuffer.getSize(), IID_PPV_ARGS(&vertexBuffer)));
@@ -96,10 +113,10 @@ int start(int argc, char* argv[]) {
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineDesc{};
 	pipelineDesc.pRootSignature = rootSignature.Get();
-	pipelineDesc.VS.BytecodeLength = vertex.getSize();
-	pipelineDesc.VS.pShaderBytecode = vertex.getBuffer();
-	pipelineDesc.PS.BytecodeLength = pixel.getSize();
-	pipelineDesc.PS.pShaderBytecode = pixel.getBuffer();
+	pipelineDesc.VS.BytecodeLength = vertex.getBytecodeLength();
+	pipelineDesc.VS.pShaderBytecode = vertex.getBytecode();
+	pipelineDesc.PS.BytecodeLength = pixel.getBytecodeLength();
+	pipelineDesc.PS.pShaderBytecode = pixel.getBytecode();
 	pipelineDesc.DS.BytecodeLength = 0;
 	pipelineDesc.DS.pShaderBytecode = nullptr;
 	pipelineDesc.HS.BytecodeLength = 0;
@@ -175,12 +192,14 @@ int start(int argc, char* argv[]) {
 	indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	indexBufferView.SizeInBytes = sizeof(indices);
 	
-	DirectX::XMVECTOR cameraPosition = DirectX::XMVectorSet(0.0f, 3.0f, -3.0f, 1.0f);
 	DirectX::XMVECTOR cameraLook = DirectX::XMVectorZero();
 	DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	
 
 	float angle = 0.0f;
 	while (Display::poll()) {
+		DirectX::XMVECTOR cameraPosition = DirectX::XMVectorSet(getX(), getY(), getZ(), 1.0f);
+
 		DirectX::XMMATRIX projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(45.0f), Display::getAspectRatio(), 0.1f, 100.0f);
 		DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(cameraPosition, cameraLook, up);
 		DirectX::XMMATRIX model = DirectX::XMMatrixRotationY(angle);
