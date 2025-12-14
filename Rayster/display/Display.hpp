@@ -7,10 +7,10 @@ public:
 	static bool poll();
 	static void signalAndWait();
 	static void setFullscreen(bool enabled);
-	static void beginFrame(ID3D12GraphicsCommandList10* commandList);
-	static void endFrame(ID3D12GraphicsCommandList10* commandList);
+	static void beginFrame(ID3D12GraphicsCommandList* commandList);
+	static void endFrame(ID3D12GraphicsCommandList* commandList);
 	static void present();
-	static ID3D12GraphicsCommandList10* initializeCommandList();
+	static ID3D12GraphicsCommandList* initializeCommandList();
 	static void executeCommandList();
 
 	static HRESULT allocateVertexGpuBuffer(UINT64 size, const IID& riidResource, void** ppvResource);
@@ -22,8 +22,8 @@ public:
 		}
 	}
 
-	static inline ID3D12Device14& getDevice() {
-		return *device.Get();
+	static inline ID3D12Device& getDevice() {
+		return *instance.device.Get();
 	}
 
 	static inline UINT getHeight() {
@@ -56,10 +56,10 @@ private:
 	}
 
 	Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain;
-	static Microsoft::WRL::ComPtr<ID3D12Device14> device;
+	Microsoft::WRL::ComPtr<ID3D12Device> device;
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue;
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList10> commandList;
+	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
 	size_t currentBufferIndex = 0;
 
 	Microsoft::WRL::ComPtr<ID3D12Fence1> fence;

@@ -8,7 +8,7 @@
 #include "memory/Model.hpp"
 
 class UploadBuffer {
-	Microsoft::WRL::ComPtr<ID3D12Resource2> buffer;
+	Microsoft::WRL::ComPtr<ID3D12Resource> buffer;
 	std::vector<Model> assets;
 	SIZE_T size;
 

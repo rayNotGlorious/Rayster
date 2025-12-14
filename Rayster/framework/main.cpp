@@ -5,8 +5,9 @@ using Microsoft::WRL::ComPtr;
 
 int main(int argc, char* argv[]) {
 #ifdef _DEBUG
-	ComPtr<ID3D12Debug6> dx12Debug;
+	ComPtr<ID3D12Debug> dx12Debug;
 	ComPtr<IDXGIDebug1> dxgiDebug;
+	
 
 	ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&dx12Debug)));
 	ThrowIfFailed(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug)));

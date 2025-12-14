@@ -4,7 +4,6 @@
 using Microsoft::WRL::ComPtr;
 
 Display Display::instance;
-ComPtr<ID3D12Device14> Display::device;
 
 void printGpu(DXGI_ADAPTER_DESC3& desc);
 
@@ -12,15 +11,15 @@ void Display::initialize() {
 	ComPtr<IDXGIFactory7> factory;
 	ThrowIfFailed(CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(&factory)));
 
-	ComPtr<IDXGIAdapter4> adapter;
-	DXGI_ADAPTER_DESC3 adapterDesc{};
+	ComPtr<IDXGIAdapter3> adapter;
+	DXGI_ADAPTER_DESC2 adapterDesc{};
 	ThrowIfFailed(factory->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&adapter)));
-	ThrowIfFailed(adapter->GetDesc3(&adapterDesc));
+	ThrowIfFailed(adapter->GetDesc2(&adapterDesc));
 
 	std::cout << "Chosen GPU:" << std::endl;
-	printGpu(adapterDesc);
+	// printGpu(adapterDesc);
 
-	ThrowIfFailed(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&instance.device)));
+	ThrowIfFailed(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&instance.device)));
 
 	D3D12_COMMAND_QUEUE_DESC queueDesc{};
 	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
@@ -37,7 +36,8 @@ void Display::initialize() {
 	}
 
 	ThrowIfFailed(instance.device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&instance.commandAllocator)));
-	ThrowIfFailed(instance.device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&instance.commandList)));
+	ThrowIfFailed(instance.device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, instance.commandAllocator.Get(), nullptr, IID_PPV_ARGS(&instance.commandList)));
+	instance.commandList->Close();
 
 	const wchar_t NAME[] = L"Rayster";
 	WNDCLASSEXW wc{};
@@ -301,7 +301,7 @@ void Display::setFullscreen(bool enabled) {
 	instance.fullscreened = enabled;
 }
 
-void Display::beginFrame(ID3D12GraphicsCommandList10* commandList) {
+void Display::beginFrame(ID3D12GraphicsCommandList* commandList) {
 	instance.currentBufferIndex = instance.swapChain->GetCurrentBackBufferIndex();
 
 	D3D12_RESOURCE_BARRIER rtvBarrier{};
@@ -328,7 +328,7 @@ void Display::beginFrame(ID3D12GraphicsCommandList10* commandList) {
 	commandList->OMSetRenderTargets(1, &instance.rtvHandles[instance.currentBufferIndex], false, &instance.depthStencilHandle);
 }
 
-void Display::endFrame(ID3D12GraphicsCommandList10* commandList) {
+void Display::endFrame(ID3D12GraphicsCommandList* commandList) {
 	D3D12_RESOURCE_BARRIER rtvBarrier{};
 	rtvBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 	rtvBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
@@ -353,7 +353,7 @@ void Display::present() {
 	instance.swapChain->Present(1, 0);
 }
 
-ID3D12GraphicsCommandList10* Display::initializeCommandList() {
+ID3D12GraphicsCommandList* Display::initializeCommandList() {
 	instance.commandAllocator->Reset();
 	instance.commandList->Reset(instance.commandAllocator.Get(), nullptr);
 	return instance.commandList.Get();
