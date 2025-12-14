@@ -1,5 +1,14 @@
 #pragma once
+
+#include <unordered_map>
+#include <unordered_set>
+#include <optional>
+#include <string>
+#include <chrono>
+#include <functional>
+
 #include "common.h"
+#include "display/Key.hpp"
 
 class Display {
 public:
@@ -37,6 +46,19 @@ public:
 	static inline FLOAT getAspectRatio() {
 		return (float)getWidth() / (float)getHeight();
 	}
+
+	static inline float getDeltaTime() {
+		return instance.deltaTime.count();
+	}
+
+	static void registerKeyPressCallback(Key key, std::function<void(void)> callback, std::optional<std::string> name = std::nullopt);
+	static void deregisterKeyPressCallback(Key key, std::string name);
+	static void registerKeyReleaseCallback(Key key, std::function<void(void)> callback, std::optional<std::string> name = std::nullopt);
+	static void deregisterKeyReleaseCallback(Key key, std::string name);
+	static bool isKeyPressed(Key key);
+
+	static void registerFrameCallback(std::function<void(float)> callback, std::string name);
+	static void deregisterFrameCallback(const std::string& name);
 
 private:
 	static Display instance;
@@ -83,7 +105,26 @@ private:
 	bool resized = false;
 	bool fullscreened = false;
 
+	// Keys
+	// TODO: Separate this into a seperate "Input" singleton?
+	using KeyDirectory = std::unordered_map<Key, std::vector<std::tuple<std::optional<std::string>, std::function<void(void)>>>>;
+
+	KeyDirectory keyPressCallbacks;
+	KeyDirectory keyReleaseCallbacks;
+	
+	std::unordered_set<Key> pressed;
 	static LRESULT CALLBACK onWindowMessage(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	
+	static void registerKeyCallback(KeyDirectory& directory, Key key, std::function<void(void)> callback, std::optional<std::string> name);
+	static void deregisterKeyCallback(KeyDirectory& directory, Key key, std::string name);
+	static void handleKeyCallback(KeyDirectory& directory, Key key);
+
+	// Game State
+	using FrameDirectory = std::unordered_map<std::string, std::function<void(float)>>;
+
+	FrameDirectory frameCallbacks;
+	std::chrono::duration<float, std::milli> deltaTime;
+	static void handleFrameCallbacks(float deltaTime);
 
 public:
 	Display(const Display&) = delete;

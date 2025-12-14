@@ -24,13 +24,19 @@
     <ClCompile Include="display\Display.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="shader\Shader.cpp">
+    <ClCompile Include="logic\Shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="memory\Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="memory\gpu\UploadBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="logic\Camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="math\Vector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -41,13 +47,22 @@
     <ClInclude Include="display\Display.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="shader\Shader.hpp">
+    <ClInclude Include="logic\Shader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="memory\Model.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="memory\gpu\UploadBuffer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="display\Key.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="logic\Camera.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="math\Vector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
