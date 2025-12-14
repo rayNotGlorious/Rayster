@@ -140,6 +140,8 @@
     <ClCompile Include="framework\main.cpp" />
     <ClCompile Include="display\Display.cpp" />
     <ClCompile Include="framework\start.cpp" />
+    <ClCompile Include="logic\Camera.cpp" />
+    <ClCompile Include="math\Vector.cpp" />
     <ClCompile Include="memory\gpu\UploadBuffer.cpp" />
     <ClCompile Include="memory\Model.cpp" />
     <ClCompile Include="logic\Shader.cpp" />
@@ -149,6 +151,7 @@
     <ClInclude Include="display\Display.hpp" />
     <ClInclude Include="display\Key.hpp" />
     <ClInclude Include="logic\Camera.hpp" />
+    <ClInclude Include="math\Vector.h" />
     <ClInclude Include="memory\gpu\UploadBuffer.hpp" />
     <ClInclude Include="memory\Model.hpp" />
     <ClInclude Include="logic\Shader.hpp" />

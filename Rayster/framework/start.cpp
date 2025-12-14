@@ -5,8 +5,7 @@
 #include "logic/Shader.hpp"
 #include "memory/Model.hpp"
 #include "memory/gpu/UploadBuffer.hpp"
-
-constexpr float PI = 3.14159265358979323846;
+#include "logic/Camera.hpp"
 
 using Microsoft::WRL::ComPtr;
 
@@ -14,26 +13,6 @@ struct Vertex {
 	float x, y, z;
 	float r, g, b;
 };
-
-constexpr static float degreesToRadians(float degrees) {
-	return degrees * 180 / PI;
-}
-
-float theta = degreesToRadians(45.0f);
-float phi = degreesToRadians(45.0f);
-float radius = 6.0f;
-
-static inline float getX() {
-	return radius * sinf(theta) * cosf(phi);
-}
-
-static inline float getY() {
-	return radius * sinf(theta) * sinf(phi);
-}
-
-static inline float getZ() {
-	return radius * cosf(theta);
-}
 
 int start(int argc, char* argv[]) {
 	Display::setFullscreen(true);
@@ -198,16 +177,16 @@ int start(int argc, char* argv[]) {
 	indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	indexBufferView.SizeInBytes = sizeof(indices);
 	
-	DirectX::XMVECTOR cameraLook = DirectX::XMVectorZero();
-	DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	
+	Camera camera{ 
+		DirectX::XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f), 
+		DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), 
+		0.05f
+	};
 
 	float angle = 0.0f;
 	while (Display::poll()) {
-		DirectX::XMVECTOR cameraPosition = DirectX::XMVectorSet(getX(), getY(), getZ(), 1.0f);
-
 		DirectX::XMMATRIX projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(45.0f), Display::getAspectRatio(), 0.1f, 100.0f);
-		DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(cameraPosition, cameraLook, up);
+		DirectX::XMMATRIX view{ camera.deriveViewMatrix() };
 		DirectX::XMMATRIX model = DirectX::XMMatrixRotationY(angle);
 		angle += 0.001f;
 

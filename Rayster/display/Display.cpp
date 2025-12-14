@@ -1,5 +1,7 @@
 #include "Display.hpp"
 #include <iostream>
+#include <windowsx.h>
+
 
 using Microsoft::WRL::ComPtr;
 
@@ -132,6 +134,21 @@ void Display::initialize() {
 
 	instance.loadDepthStencilBuffer(instance.width, instance.height);
 
+	instance.registerFrameCallback([](float _) {
+		MSG message;
+		while (PeekMessageW(&message, instance.window, 0, 0, PM_REMOVE)) {
+			TranslateMessage(&message);
+			DispatchMessageW(&message);
+		}
+	}, "WindowPoll");
+
+	instance.registerFrameCallback([](float _) {
+		if (instance.resized) {
+			instance.flushPipeline();
+			instance.resize();
+		}
+	}, "ResizeSwapChain");
+
 	instance.registerKeyPressCallback(Key::F11, []() {
 		instance.setFullscreen(!instance.fullscreened);
 	});
@@ -249,15 +266,15 @@ void Display::freeDepthStencilBuffer() {
 	instance.depthStencilBuffer.Reset();
 }
 
-void Display::registerKeyCallback(KeyDirectory& directory, Key key, void (*callback)(void), std::optional<std::string> name) {
+void Display::registerKeyCallback(KeyDirectory& directory, Key key, std::function<void(void)> callback, std::optional<std::string> name) {
 	directory[key].push_back(std::make_tuple(name, callback));
 }
 
-void Display::registerKeyPressCallback(Key key, void (*callback)(void), std::optional<std::string> name) {
+void Display::registerKeyPressCallback(Key key, std::function<void(void)> callback, std::optional<std::string> name) {
 	registerKeyCallback(instance.keyPressCallbacks, key, callback, name);
 }
 
-void Display::registerKeyReleaseCallback(Key key, void(*callback)(void), std::optional<std::string> name) {
+void Display::registerKeyReleaseCallback(Key key, std::function<void(void)> callback, std::optional<std::string> name) {
 	registerKeyCallback(instance.keyReleaseCallbacks, key, callback, name);
 }
 
@@ -282,6 +299,20 @@ void Display::deregisterKeyReleaseCallback(Key key, std::string name) {
 	deregisterKeyCallback(instance.keyReleaseCallbacks, key, name);
 }
 
+void Display::registerFrameCallback(std::function<void(float)> callback, std::string name) {
+	instance.frameCallbacks[name] = callback;
+}
+
+void Display::deregisterFrameCallback(const std::string& name) {
+	instance.frameCallbacks.erase(name);
+}
+
+void Display::handleFrameCallbacks(float deltaTime) {
+	for (auto& [_, op] : instance.frameCallbacks) {
+		op(deltaTime);
+	}
+}
+
 bool Display::poll() {
 	static auto lastFrame = std::chrono::high_resolution_clock::now();
 
@@ -289,16 +320,7 @@ bool Display::poll() {
 	instance.deltaTime = now - lastFrame;
 	lastFrame = now;
 
-	MSG message;
-	while (PeekMessageW(&message, instance.window, 0, 0, PM_REMOVE)) {
-		TranslateMessage(&message);
-		DispatchMessageW(&message);
-	}
-
-	if (instance.resized) {
-		instance.flushPipeline();
-		instance.resize();
-	}
+	handleFrameCallbacks(Display::getDeltaTime());
 
 	return !instance.closed;
 }
@@ -472,6 +494,10 @@ void Display::handleKeyCallback(KeyDirectory& directory, Key key) {
 	for (auto& [_, op] : it->second) {
 		op();
 	}
+}
+
+bool Display::isKeyPressed(Key key) {
+	return GetKeyState(static_cast<int>(key)) & 0x8000;
 }
 
 LRESULT CALLBACK Display::onWindowMessage(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam) {
