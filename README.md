@@ -13,7 +13,7 @@ The checklist below serves to mark the progress I've made so far:
 - [ ] Ocean Plane Generation
 - [ ] Tesselation?
 - [ ] Naive IFT Compute Shader Implementation
-- [ ] Use Philips Spectrum to create initial height map without phase shifting
+- [ ] Implement Philips Spectrum with IFT
 - [ ] Fast IFT Compute Shader Implementation
 - [ ] Implement Physically-Based Lighting
 - [ ] Experiment with other Ocean Spectra
