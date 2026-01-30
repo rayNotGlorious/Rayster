@@ -1,7 +1,7 @@
 # Rayster: A DirectX 12 Rendering Engine for Rasterization and Raytracing
 ![A photo of the Rayster renderer in action](demo.png "A photo of the Rayster renderer in action, rendering a spinning multicolored cube.")
 
-Disclaimer: This is my first major project in C++! Coming from a C and Rust background, my code likely won't be up to modern C++ standards, but I'm refactoring where I can as I work through learncpp.com. Loving the language so far!
+Disclaimer: This is my first major project in C++! Coming from a C and Rust background, my code likely won't be up to modern C++ standards, but I'm refactoring where I can as I work through learncpp.com.
 
 Rayster is a toy rendering engine, targeting Windows 10 and using DirectX 12, with plans to support both rasterization and raytracing. The primary uses for the engine are to implement research papers I find interesting, learn more about mathematics and computing, and to scratch the artistic itch I get every now and then.
 
